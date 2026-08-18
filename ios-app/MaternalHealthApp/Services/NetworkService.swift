@@ -31,7 +31,7 @@ class NetworkService {
 
     // Change this to your backend URL
     private let baseURL = "http://localhost:3000/api" // Node.js
-    // private let baseURL = "http://localhost:8000/api" // Python/FastAPI
+    //private let baseURL = "http://localhost:8000/api" // Python/FastAPI
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -88,7 +88,10 @@ class NetworkService {
             }
             .decode(type: T.self, decoder: JSONDecoder.customDecoder)
             .mapError { error in
-                if let networkError = error as? NetworkError { return networkError }
+                if let networkError = error as? NetworkError {
+                    return networkError
+                }
+                print("REAL DECODING ERROR: \(error)")
                 return NetworkError.decodingError
             }
             .eraseToAnyPublisher()
@@ -120,7 +123,7 @@ class NetworkService {
             queryItems.append(URLQueryItem(name: "doulaAccessible", value: "\(doulaAccessible)"))
         }
 
-        var components = URLComponents(string: baseURL + "/hospitals/search")
+        var components = URLComponents(string: baseURL + "/hospitals")
         components?.queryItems = queryItems
 
         guard let url = components?.url else {
@@ -139,20 +142,23 @@ class NetworkService {
                 return data
             }
             .decode(type: HospitalSearchResponse.self, decoder: JSONDecoder.customDecoder)
-            .mapError { _ in NetworkError.decodingError }
+            .mapError { error in
+                print("REAL DECODING ERROR: \(error)")
+                return NetworkError.decodingError
+            }
             .eraseToAnyPublisher()
     }
 
-    func getHospitalDetail(id: String) -> AnyPublisher<Hospital, NetworkError> {
+    func getHospitalDetail(id: Int) -> AnyPublisher<Hospital, NetworkError> {
         return request(endpoint: "/hospitals/\(id)")
     }
 
-    func compareHospitals(ids: [String]) -> AnyPublisher<[Hospital], NetworkError> {
-        struct CompareRequest: Encodable { let hospitalIds: [String] }
+    func compareHospitals(ids: [Int]) -> AnyPublisher<[Hospital], NetworkError> {
+        struct CompareRequest: Encodable { let hospitalIds: [Int] }
         return request(endpoint: "/hospitals/compare", method: "POST", body: CompareRequest(hospitalIds: ids))
     }
 
-    func getHospitalReviews(hospitalId: String, page: Int = 1, limit: Int = 20) -> AnyPublisher<[Review], NetworkError> {
+    func getHospitalReviews(hospitalId: Int, page: Int = 1, limit: Int = 20) -> AnyPublisher<[Review], NetworkError> {
         return request(endpoint: "/hospitals/\(hospitalId)/reviews?page=\(page)&limit=\(limit)")
     }
 
@@ -194,12 +200,12 @@ class NetworkService {
         return request(endpoint: "/users/saved-hospitals", requiresAuth: true)
     }
 
-    func saveHospital(hospitalId: String, notes: String? = nil) -> AnyPublisher<Hospital, NetworkError> {
-        struct SaveRequest: Encodable { let hospitalId: String; let notes: String? }
+    func saveHospital(hospitalId: Int, notes: String? = nil) -> AnyPublisher<Hospital, NetworkError> {
+        struct SaveRequest: Encodable { let hospitalId: Int; let notes: String? }
         return request(endpoint: "/users/saved-hospitals", method: "POST", body: SaveRequest(hospitalId: hospitalId, notes: notes), requiresAuth: true)
     }
 
-    func removeSavedHospital(hospitalId: String) -> AnyPublisher<Void, NetworkError> {
+    func removeSavedHospital(hospitalId: Int) -> AnyPublisher<Void, NetworkError> {
         struct EmptyResponse: Decodable {}
         return request(endpoint: "/users/saved-hospitals/\(hospitalId)", method: "DELETE", requiresAuth: true)
             .map { (_: EmptyResponse) in () }
@@ -245,7 +251,6 @@ extension JSONDecoder {
     static var customDecoder: JSONDecoder {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
         return decoder
     }
 }
@@ -258,9 +263,7 @@ class MockNetworkService {
 
     func searchHospitals() -> AnyPublisher<HospitalSearchResponse, NetworkError> {
         let response = HospitalSearchResponse(
-            hospitals: Hospital.mockHospitals.map { hospital in
-                HospitalWithDistance(hospital: hospital, distanceMiles: Double.random(in: 1...20))
-            },
+            hospitals: Hospital.mockHospitals,
             total: Hospital.mockHospitals.count
         )
         return Just(response)
@@ -269,7 +272,7 @@ class MockNetworkService {
             .eraseToAnyPublisher()
     }
 
-    func getHospitalDetail(id: String) -> AnyPublisher<Hospital, NetworkError> {
+    func getHospitalDetail(id: Int) -> AnyPublisher<Hospital, NetworkError> {
         if let hospital = Hospital.mockHospitals.first(where: { $0.id == id }) {
             return Just(hospital)
                 .delay(for: 0.5, scheduler: RunLoop.main)

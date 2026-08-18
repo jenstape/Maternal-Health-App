@@ -6,7 +6,7 @@ import CoreLocation
 
 // MARK: - Hospital Model
 struct Hospital: Identifiable, Codable, Hashable {
-    let id: String
+    let id: Int
     let name: String
     let address: String
     let city: String
@@ -82,7 +82,7 @@ struct Hospital: Identifiable, Codable, Hashable {
 
 // MARK: - Hospital Search Response
 struct HospitalSearchResponse: Codable {
-    let hospitals: [HospitalWithDistance]
+    let hospitals: [Hospital]
     let total: Int
 }
 
@@ -90,7 +90,7 @@ struct HospitalWithDistance: Codable, Identifiable {
     let hospital: Hospital
     let distanceMiles: Double
 
-    var id: String { hospital.id }
+    var id: Int { hospital.id }
 
     enum CodingKeys: String, CodingKey {
         case hospital
@@ -102,7 +102,7 @@ struct HospitalWithDistance: Codable, Identifiable {
 extension Hospital {
     static let mockHospitals: [Hospital] = [
         Hospital(
-            id: "1",
+            id: 1,
             name: "Emory University Hospital Midtown",
             address: "550 Peachtree St NE",
             city: "Atlanta",
@@ -128,7 +128,7 @@ extension Hospital {
             averageReview: 4.4
         ),
         Hospital(
-            id: "2",
+            id: 2,
             name: "Grady Memorial Hospital",
             address: "80 Jesse Hill Jr Dr SE",
             city: "Atlanta",
@@ -154,7 +154,7 @@ extension Hospital {
             averageReview: 4.1
         ),
         Hospital(
-            id: "3",
+            id: 3,
             name: "Piedmont Atlanta Hospital",
             address: "1968 Peachtree Rd NW",
             city: "Atlanta",

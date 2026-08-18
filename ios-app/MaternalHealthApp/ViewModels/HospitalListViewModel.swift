@@ -17,7 +17,7 @@ struct HospitalFilters {
 // MARK: - Hospital List ViewModel
 @MainActor
 class HospitalListViewModel: ObservableObject {
-    @Published var hospitals: [HospitalWithDistance] = []
+    @Published var hospitals: [Hospital] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var filters = HospitalFilters()
@@ -27,7 +27,7 @@ class HospitalListViewModel: ObservableObject {
     private let networkService = NetworkService.shared
 
     // For development/testing without backend
-    private let useMockData = true // Set to false when backend is ready
+    private let useMockData = false // Now using real backend
 
     init() {
         $filters
@@ -39,22 +39,25 @@ class HospitalListViewModel: ObservableObject {
     }
 
     func loadHospitals() {
+        print("STEP 1: loadHospitals called")
         isLoading = true
         errorMessage = nil
 
         locationService.requestLocation()
             .sink { [weak self] completion in
                 if case .failure(let error) = completion {
+                    print("STEP 2 FAILED: location error - \(error)")
                     self?.isLoading = false
                     self?.errorMessage = error.localizedDescription
                 }
             } receiveValue: { [weak self] location in
+                print("STEP 2 SUCCESS: got location \(location)")
                 self?.fetchHospitals(latitude: location.latitude, longitude: location.longitude)
             }
             .store(in: &cancellables)
     }
-
     private func fetchHospitals(latitude: Double, longitude: Double) {
+        print("STEP 3: fetchHospitals called with \(latitude), \(longitude)")
         if useMockData {
             MockNetworkService.shared.searchHospitals()
                 .receive(on: DispatchQueue.main)
@@ -80,9 +83,11 @@ class HospitalListViewModel: ObservableObject {
             .sink { [weak self] completion in
                 self?.isLoading = false
                 if case .failure(let error) = completion {
+                    print("HOSPITAL FETCH ERROR: \(error)")
                     self?.errorMessage = error.localizedDescription
                 }
             } receiveValue: { [weak self] response in
+                print("HOSPITAL FETCH SUCCESS: got \(response.hospitals.count) hospitals")
                 self?.hospitals = response.hospitals
             }
             .store(in: &cancellables)

@@ -49,22 +49,21 @@ struct HospitalListView: View {
 
     private var hospitalList: some View {
         List {
-            ForEach(filteredHospitals) { hospitalWithDistance in
-                NavigationLink(destination: HospitalDetailView(hospital: hospitalWithDistance.hospital)) {
-                    HospitalRowView(hospital: hospitalWithDistance.hospital, distance: hospitalWithDistance.distanceMiles)
+            ForEach(filteredHospitals) { hospital in
+                NavigationLink(destination: HospitalDetailView(hospital: hospital)) {
+                    HospitalRowView(hospital: hospital)
                 }
             }
         }
         .listStyle(.plain)
     }
-
-    private var filteredHospitals: [HospitalWithDistance] {
+    private var filteredHospitals: [Hospital] {
         if searchText.isEmpty {
             return viewModel.hospitals
         } else {
             return viewModel.hospitals.filter {
-                $0.hospital.name.localizedCaseInsensitiveContains(searchText) ||
-                $0.hospital.city.localizedCaseInsensitiveContains(searchText)
+                $0.name.localizedCaseInsensitiveContains(searchText) ||
+                $0.city.localizedCaseInsensitiveContains(searchText)
             }
         }
     }
@@ -72,20 +71,13 @@ struct HospitalListView: View {
 
 struct HospitalRowView: View {
     let hospital: Hospital
-    let distance: Double
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(hospital.name).font(.headline)
                 Spacer()
-                Text("\(String(format: "%.1f", distance)) mi")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
             }
-            Text(hospital.city + ", " + hospital.state)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
 
             HStack(spacing: 12) {
                 if let rating = hospital.overallRating {
