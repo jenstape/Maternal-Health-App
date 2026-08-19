@@ -85,7 +85,6 @@ Black mothers in the U.S. face maternal mortality rates several times higher tha
 Not yet decided — personal/educational project for now.
 
 ## Screenshots
-## Screenshots
 
 ![Project Screenshot](screenshots_of_lifeline.png)
 
