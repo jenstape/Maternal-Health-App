@@ -86,5 +86,12 @@ Not yet decided — personal/educational project for now.
 
 ## Screenshots
 
-![Project Screenshot](screenshots_of_lifeline.png)
+### Home Page
+![Home Screen](lifeline_home_page.png)
+
+### Ratings Page
+![Ratings Page](lifeline_ratings_page.png)
+
+### Filters Page
+![Filters Page](lifeline_filters_page.png)
 
